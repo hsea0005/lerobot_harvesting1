@@ -136,8 +136,7 @@ def find_joint_and_ee_bounds(cfg: FindJointLimitsConfig) -> None:
 
             # 2. Read Observations
             observation = robot.get_observation()
-            motor_names = robot.bus.motors  # type: ignore[attr-defined]  # single-bus robots only
-            joint_positions = np.array([observation[f"{key}.pos"] for key in motor_names])
+            joint_positions = np.array([observation[key] for key in robot.action_features])
 
             # 3. Calculate Kinematics
             # Forward kinematics to get (x, y, z) translation

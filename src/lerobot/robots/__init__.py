@@ -19,3 +19,9 @@ from .robot import Robot
 from .utils import make_robot_from_config
 
 __all__ = ["Robot", "RobotConfig", "make_robot_from_config"]
+
+# Built-in harvesting configs are available to every standard hardware CLI.
+from .twister.config_twister import TwisterConfig  # noqa: E402
+from .bimanual_harvesting.config_bimanual_harvesting import BimanualHarvestingConfig  # noqa: E402
+
+__all__ += ['TwisterConfig', 'BimanualHarvestingConfig']

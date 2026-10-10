@@ -35,7 +35,15 @@ class TeleopEvents(Enum):
 
 def make_teleoperator_from_config(config: TeleoperatorConfig) -> "Teleoperator":
     # TODO(Steven): Consider just using the make_device_from_device_class for all types
-    if config.type == "keyboard":
+    if config.type == "twister_leader":
+        from .twister_leader import TwisterLeader
+
+        return TwisterLeader(config)
+    elif config.type == "bimanual_harvesting_leader":
+        from .bimanual_harvesting_leader import BimanualHarvestingLeader
+
+        return BimanualHarvestingLeader(config)
+    elif config.type == "keyboard":
         from .keyboard import KeyboardTeleop
 
         return KeyboardTeleop(config)

@@ -19,3 +19,9 @@ from .teleoperator import Teleoperator
 from .utils import TeleopEvents, make_teleoperator_from_config
 
 __all__ = ["Teleoperator", "TeleoperatorConfig", "TeleopEvents", "make_teleoperator_from_config"]
+
+# Built-in harvesting configs are available to every standard hardware CLI.
+from .twister_leader.config_twister_leader import TwisterLeaderConfig  # noqa: E402
+from .bimanual_harvesting_leader.config_bimanual_harvesting_leader import BimanualHarvestingLeaderConfig  # noqa: E402
+
+__all__ += ['TwisterLeaderConfig', 'BimanualHarvestingLeaderConfig']

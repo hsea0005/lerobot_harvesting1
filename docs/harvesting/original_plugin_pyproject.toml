@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=71"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lerobot_robot_harvesting"
+version = "1.2.0"
+description = "Two-joint STS3215 Twister and Twister plus SO100 LeRobot hardware plugins"
+requires-python = ">=3.12"
+license = {text = "Apache-2.0"}
+dependencies = ["lerobot[feetech]>=0.6.2,<0.7"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
