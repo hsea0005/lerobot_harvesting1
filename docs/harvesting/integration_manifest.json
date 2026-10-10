@@ -73,5 +73,34 @@
     "docs/harvesting/ROTATION.md",
     "docs/harvesting/VALIDATION.md",
     "examples/harvesting/verify_install.py"
-  ]
+  ],
+  "device_workflow": {
+    "date": "2026-10-10",
+    "template": "examples/notebooks/quickstart.ipynb",
+    "template_sha256": "bb239cc3a68b47040bc7cbdfe5ca7a8514fce06b95f7111a0aae0abfc13de607",
+    "added_files": [
+      "examples/notebooks/training_device.ipynb",
+      "examples/notebooks/hardware_device.ipynb",
+      "docs/harvesting/USE_CASE_CHANGELOG.md"
+    ],
+    "modified_files": [
+      "docs/harvesting/README.md",
+      "docs/harvesting/integration_manifest.json"
+    ],
+    "fork_baseline_commit": "b9cb121cb7d4e3e26ec5c906d08dda68d151ba52",
+    "integration_commit": "fed65dd2eb0092c5d7af672c07f99cfde16ec403",
+    "notebook_execution": "Generate PowerShell commands only; paste chosen commands into terminal.",
+    "validation": {
+      "both_notebooks_code_cells_executed_as_command_generators": true,
+      "embodiments_checked": [
+        "bimanual_harvesting",
+        "twister"
+      ],
+      "generated_cli_configurations_parsed": 22,
+      "resume_commands_checked_without_loading_checkpoint": true,
+      "rollout_parsing_used_in_memory_act_config": true,
+      "original_quickstart_unchanged": true,
+      "hardware_or_jobs_executed": false
+    }
+  }
 }

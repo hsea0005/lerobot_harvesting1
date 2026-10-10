@@ -356,3 +356,15 @@ Official references:
 - https://wiki.seeedstudio.com/lerobot_so100m_new/
 - https://files.seeedstudio.com/products/Feetech/108090023_STS3215-C001_Datasheet.pdf
 - https://lightwheelai.github.io/leisaac/docs/tutorials/custom_task/
+
+## Separate training and hardware computers
+
+Use [training_device.ipynb](../../examples/notebooks/training_device.ipynb) on the training
+computer and [hardware_device.ipynb](../../examples/notebooks/hardware_device.ipynb) on
+the computer connected to controllers and cameras. Edit Configuration and Run All to
+generate PowerShell commands, then paste selected commands into a terminal. The notebooks
+do not execute installations, hardware operations or jobs. Both support Twister-only and
+Twister + SO-100. Create separate local Conda environments and match the dataset/model IDs
+and code commit across both computers.
+
+[USE_CASE_CHANGELOG.md](USE_CASE_CHANGELOG.md) records the file changes since the fork baseline.
