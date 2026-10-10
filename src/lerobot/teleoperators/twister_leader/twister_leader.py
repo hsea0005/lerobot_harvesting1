@@ -33,6 +33,20 @@ class TwisterLeader(TwisterDeviceMixin, Teleoperator):
     def connect(self, calibrate: bool = True) -> None:
         try:
             self._connect_bus(calibrate)
+            # Finish startup in a verified passive state, even if configuration
+            # left torque enabled. A leader must be movable before teleoperation.
+            self.disable_torque()
+            with self._bus_lock:
+                for motor in self.bus.motors:
+                    torque = self.bus.read(
+                        "Torque_Enable", motor, normalize=False,
+                        num_retry=self.config.num_read_retries,
+                    )
+                    if torque != 0:
+                        raise RuntimeError(
+                            f"Twister leader '{motor}' still has Torque_Enable={torque}; "
+                            "refusing to start with powered leader motors."
+                        )
         except BaseException:
             try:
                 self._disconnect_resources()

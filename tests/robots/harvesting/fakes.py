@@ -10,6 +10,7 @@ class FakeBus:
         self.port, self.motors = port, motors
         self.calibration = calibration or {}
         self.is_connected = False
+        self.torque_enabled = False
         self.positions = {name: 2048 for name in motors}
         self.operations = []
         self.fail_connect = False
@@ -32,9 +33,11 @@ class FakeBus:
         self.is_connected = False
 
     def disable_torque(self):
+        self.torque_enabled = False
         self.operations.append(("torque", False))
 
     def enable_torque(self):
+        self.torque_enabled = True
         self.operations.append(("torque", True))
 
     @contextmanager
@@ -48,6 +51,12 @@ class FakeBus:
 
     def write(self, register, motor, value, **kwargs):
         self.operations.append(("write", register, motor, value))
+
+    def read(self, register, motor, normalize=True, **kwargs):
+        if register != "Torque_Enable":
+            raise ValueError(f"Unsupported fake register: {register}")
+        self.operations.append(("read", register, motor))
+        return int(self.torque_enabled)
 
     def sync_read(self, register, motors=None, normalize=True, **kwargs):
         names = [motors] if isinstance(motors, str) else motors or self.motors

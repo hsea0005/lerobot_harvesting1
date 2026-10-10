@@ -204,6 +204,49 @@ class DeviceTests(unittest.TestCase):
         self.assertNotIn(("torque", True), leader.bus.operations)
         self.assertEqual(leader.get_action()["rotation.pos"], 180)
 
+    def test_leader_disables_torque_left_enabled_after_startup(self):
+        for mode in ["single_turn", "continuous"]:
+            with self.subTest(mode=mode):
+                limits = {"rotation_min_deg": 0, "rotation_max_deg": MAX_ROTATION_DEG} if mode == "single_turn" else {}
+                leader = TwisterLeader(TwisterLeaderConfig(
+                    port="FAKE", id="leader", calibration_dir=self.cal_dir,
+                    rotation_control=mode, **limits,
+                ))
+                self.calibrate_fake(leader)
+                self.addCleanup(leader.disconnect)
+                connect_bus = leader._connect_bus
+
+                def leave_torque_enabled(calibrate):
+                    connect_bus(calibrate)
+                    leader.bus.enable_torque()
+
+                with patch.object(leader, "_connect_bus", side_effect=leave_torque_enabled):
+                    leader.connect()
+                self.assertTrue(leader.is_connected)
+                self.assertFalse(leader.bus.torque_enabled)
+                for motor in ["rotation", "gripper"]:
+                    self.assertIn(("read", "Torque_Enable", motor), leader.bus.operations)
+                if mode == "continuous":
+                    self.assertFalse(leader._rotation_loop.enabled)
+                    self.assertTrue(leader._rotation_loop.is_running)
+
+    def test_leader_refuses_connection_if_either_motor_remains_powered(self):
+        for mode in ["single_turn", "continuous"]:
+            for powered_motor in ["rotation", "gripper"]:
+                with self.subTest(mode=mode, powered_motor=powered_motor):
+                    limits = {"rotation_min_deg": 0, "rotation_max_deg": MAX_ROTATION_DEG} if mode == "single_turn" else {}
+                    leader = TwisterLeader(TwisterLeaderConfig(
+                        port="FAKE", id="leader", calibration_dir=self.cal_dir,
+                        rotation_control=mode, **limits,
+                    ))
+                    self.calibrate_fake(leader)
+                    self.addCleanup(leader.disconnect)
+                    with patch.object(leader.bus, "read", side_effect=lambda register, motor, **kwargs: int(motor == powered_motor)):
+                        with self.assertRaisesRegex(RuntimeError, "powered leader"):
+                            leader.connect()
+                    self.assertFalse(leader.bus.is_connected)
+                    self.assertIsNone(leader._rotation_loop)
+
     def test_calibration_cli_connect_false_is_supported(self):
         robot = Twister(TwisterConfig(port="FAKE", calibration_dir=self.cal_dir))
         robot.connect(calibrate=False)

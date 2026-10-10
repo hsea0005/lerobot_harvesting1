@@ -121,3 +121,25 @@ This work does not change pyproject.toml, uv.lock or the original quickstart.ipy
 
 Append a dated entry for future use-case file changes and reconcile the inventory against the baseline
 commit plus untracked files. Keep runtime artifacts and unrelated upstream changes out of this list.
+
+## 2026-10-10: verify passive Twister leader after connection
+
+User diagnostics on hardware reported Torque_Enable=1 for both leader motors after
+connect(), with is_follower=False. Explicit disable_torque() changed both to zero.
+The startup operation responsible for enabling torque has not been established.
+
+- Modified src/lerobot/teleoperators/twister_leader/twister_leader.py: disable torque
+  after shared startup and verify both raw Torque_Enable registers. Refuse connection
+  and clean up on a powered motor or read failure. Applies to standalone and combined
+  leaders, with existing CLI fields and follower startup unchanged.
+- Modified tests/robots/harvesting/fakes.py: model torque state and raw torque-register reads.
+- Modified tests/robots/harvesting/test_harvesting.py: regressions for torque left enabled
+  after startup and refusal/cleanup when either motor reports enabled, in both rotation modes.
+- Updated docs/harvesting/INTEGRATION.md, docs/harvesting/integration_manifest.json and
+  this changelog to record the adjustment: six existing files modified, no new files.
+
+Validation: both new regressions failed before the fix; all 77 harvesting tests passed
+afterwards with real dependencies and fake motors/cameras. The patched connection still
+needs verification on the hardware computer. Sync the changed source and start a fresh
+process; an existing editable installation needs no dependency reinstallation.
+Gripper startup alignment/direction remains a separate check after passive operation.

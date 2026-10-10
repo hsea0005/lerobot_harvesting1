@@ -101,3 +101,14 @@ The original supporting rotation and simulation documentation was retained with 
 `CHANGE_INVENTORY.md` and `VALIDATION.md` are clearly labeled historical reports from the ZIP.
 `original_plugin_pyproject.toml` and `LICENSE` preserve the archive's metadata and licensing;
 the metadata file is archival and is not a separate install target.
+
+## Subsequent leader torque correction (2026-10-10)
+
+The original AST comparison above describes the initial integration. TwisterLeader.connect()
+now explicitly disables torque after startup and verifies both raw Torque_Enable registers;
+it refuses connection and cleans up if either motor remains powered. This follows a user
+hardware report of both registers reading 1 after connect and 0 after explicit disable.
+The startup cause remains unconfirmed. Both rotation modes and combined leaders inherit
+the correction without new CLI parameters. All 77 harvesting tests pass with fake hardware;
+the patch still requires verification on the hardware computer. See
+[USE_CASE_CHANGELOG.md](USE_CASE_CHANGELOG.md) for the six modified files.

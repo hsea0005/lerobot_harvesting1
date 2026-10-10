@@ -21,7 +21,7 @@
     "BimanualHarvestingLeaderConfig": "lerobot.teleoperators.bimanual_harvesting_leader.config_bimanual_harvesting_leader"
   },
   "notes": "Control algorithms and dataclass fields preserved; modules relocated and imports/registration adapted. Bundled upstream source was not overlaid on the local checkout.",
-  "runtime_adjustment": "ContinuousRotationLoop default clock: time.monotonic -> time.perf_counter for Windows Python 3.12 resolution; all remaining implementation AST bodies and all config class ASTs match the ZIP.",
+  "runtime_adjustment": "Initial integration: default worker clock time.monotonic -> time.perf_counter for Windows Python 3.12. Subsequent correction: TwisterLeader.connect disables torque after startup and verifies both Torque_Enable registers before returning. The initial AST comparison excludes this later correction.",
   "validation": {
     "real_dependency_tests_passed": 75,
     "documented_cli_examples_passed": 19,
@@ -101,6 +101,33 @@
       "rollout_parsing_used_in_memory_act_config": true,
       "original_quickstart_unchanged": true,
       "hardware_or_jobs_executed": false
+    }
+  },
+  "leader_torque_fix": {
+    "date": "2026-10-10",
+    "reported_hardware": {
+      "after_connect": {
+        "rotation": 1,
+        "gripper": 1
+      },
+      "after_explicit_disable": {
+        "rotation": 0,
+        "gripper": 0
+      }
+    },
+    "startup_cause_confirmed": false,
+    "modified_files": [
+      "src/lerobot/teleoperators/twister_leader/twister_leader.py",
+      "tests/robots/harvesting/fakes.py",
+      "tests/robots/harvesting/test_harvesting.py",
+      "docs/harvesting/INTEGRATION.md",
+      "docs/harvesting/USE_CASE_CHANGELOG.md",
+      "docs/harvesting/integration_manifest.json"
+    ],
+    "validation": {
+      "new_regression_tests_failed_before_patch": 2,
+      "real_dependency_tests_passed_after_patch": 77,
+      "patched_hardware_verified": false
     }
   }
 }
