@@ -368,3 +368,27 @@ Twister + SO-100. Create separate local Conda environments and match the dataset
 and code commit across both computers.
 
 [USE_CASE_CHANGELOG.md](USE_CASE_CHANGELOG.md) records the file changes since the fork baseline.
+
+## Windows three-camera capture troubleshooting
+
+For the wrist/front/top arrangement, retain consistent camera names, image dimensions
+and dataset FPS across recording, training and deployment. Windows indices can change
+when USB connections change. Test all three cameras simultaneously; discovery opens
+them sequentially. Spread cameras across working USB connections; the user observed
+black/failing cameras with all three on one hub.
+
+Camera entries can request backend: DSHOW and fourcc: MJPG when the device supports
+that format. Discovery reports the default FOURCC, not all supported formats. Requested
+MJPG can fall back with a warning; it is not a guarantee of compressed USB capture.
+
+The 2026-10-14 patch in src/lerobot/cameras/opencv/camera_opencv.py selects FOURCC
+before size/FPS negotiation, rechecks it after Windows changes, and avoids redundant
+DirectShow property writes. This addresses the configuration order exposed by the
+reported pVih assertion; it does not guarantee that a driver or shared USB connection
+can support the requested simultaneous streams. Requested size/FPS validation remains.
+
+Sync that source file to the hardware repository before retrying. A failed new recording
+may already have created dataset metadata: use --resume=true with the same compatible
+ID/root, or choose a fresh dataset ID/root. Names such as side and top are different
+dataset features and cannot be interchanged when resuming. With display_data=false,
+Foxglove streaming is disabled even when display_mode=foxglove is supplied.

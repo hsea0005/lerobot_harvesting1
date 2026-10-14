@@ -147,7 +147,7 @@ class OpenCVCamera(Camera):
         Connects to the OpenCV camera specified in the configuration.
 
         Initializes the OpenCV VideoCapture object, sets desired camera properties
-        (FPS, width, height), starts the background reading thread and performs initial checks.
+        (format, width, height, FPS), starts the background reading thread and performs initial checks.
 
         Args:
             warmup (bool): If True, waits at connect() time until at least one valid frame
@@ -201,7 +201,8 @@ class OpenCVCamera(Camera):
 
         This method attempts to set the camera properties via OpenCV. It checks if
         the camera successfully applied the settings and raises an error if not.
-        FOURCC is set first (if specified) as it can affect the available FPS and resolution options.
+        FOURCC is selected before size/FPS negotiation. On Windows it is rechecked
+        after size and FPS changes because drivers can reset the selected format.
 
         Args:
             fourcc: The desired FOURCC code (e.g., "MJPG", "YUYV"). If None, auto-detect.
@@ -218,8 +219,8 @@ class OpenCVCamera(Camera):
         if self.videocapture is None:
             raise DeviceNotConnectedError(f"{self} videocapture is not initialized")
 
-        set_fourcc_after_size_and_fps = platform.system() == "Windows"
-        if self.config.fourcc is not None and not set_fourcc_after_size_and_fps:
+        recheck_fourcc = platform.system() == "Windows"
+        if self.config.fourcc is not None:
             self._validate_fourcc()
 
         default_width = int(round(self.videocapture.get(cv2.CAP_PROP_FRAME_WIDTH)))
@@ -234,14 +235,18 @@ class OpenCVCamera(Camera):
         else:
             self._validate_width_and_height()
 
+        if self.config.fourcc is not None and recheck_fourcc:
+            # DirectShow can reset the format when dimensions change. Restore it
+            # before FPS negotiation so MJPG is selected for the requested rate.
+            self._validate_fourcc()
+
         if self.fps is None:
             self.fps = self.videocapture.get(cv2.CAP_PROP_FPS)
         else:
             self._validate_fps()
 
-        if self.config.fourcc is not None and set_fourcc_after_size_and_fps:
-            # On Windows with DSHOW, changing the resolution can silently override the FOURCC setting.
-            # Set FOURCC last to make sure the requested pixel format is actually enforced.
+        if self.config.fourcc is not None and recheck_fourcc:
+            # FPS negotiation can also reset the requested format on Windows.
             self._validate_fourcc()
 
     def _validate_fps(self) -> None:
@@ -253,7 +258,12 @@ class OpenCVCamera(Camera):
         if self.fps is None:
             raise ValueError(f"{self} FPS is not set")
 
-        success = self.videocapture.set(cv2.CAP_PROP_FPS, float(self.fps))
+        actual_fps = self.videocapture.get(cv2.CAP_PROP_FPS)
+        already_configured = (
+            platform.system() == "Windows" and self.backend == cv2.CAP_DSHOW
+            and math.isclose(self.fps, actual_fps, rel_tol=1e-3)
+        )
+        success = already_configured or self.videocapture.set(cv2.CAP_PROP_FPS, float(self.fps))
         actual_fps = self.videocapture.get(cv2.CAP_PROP_FPS)
         # Use math.isclose for robust float comparison
         if not success or not math.isclose(self.fps, actual_fps, rel_tol=1e-3):
@@ -270,6 +280,11 @@ class OpenCVCamera(Camera):
         if self.videocapture is None:
             raise DeviceNotConnectedError(f"{self} videocapture is not initialized")
 
+        if (
+            platform.system() == "Windows" and self.backend == cv2.CAP_DSHOW
+            and int(self.videocapture.get(cv2.CAP_PROP_FOURCC)) == fourcc_code
+        ):
+            return  # Avoid restarting a DirectShow stream already using this format.
         success = self.videocapture.set(cv2.CAP_PROP_FOURCC, fourcc_code)
         actual_fourcc_code = self.videocapture.get(cv2.CAP_PROP_FOURCC)
 
@@ -292,8 +307,15 @@ class OpenCVCamera(Camera):
         if self.capture_width is None or self.capture_height is None:
             raise ValueError(f"{self} capture_width or capture_height is not set")
 
-        width_success = self.videocapture.set(cv2.CAP_PROP_FRAME_WIDTH, float(self.capture_width))
-        height_success = self.videocapture.set(cv2.CAP_PROP_FRAME_HEIGHT, float(self.capture_height))
+        avoid_redundant_settings = platform.system() == "Windows" and self.backend == cv2.CAP_DSHOW
+        width_success = (
+            avoid_redundant_settings
+            and int(round(self.videocapture.get(cv2.CAP_PROP_FRAME_WIDTH))) == self.capture_width
+        ) or self.videocapture.set(cv2.CAP_PROP_FRAME_WIDTH, float(self.capture_width))
+        height_success = (
+            avoid_redundant_settings
+            and int(round(self.videocapture.get(cv2.CAP_PROP_FRAME_HEIGHT))) == self.capture_height
+        ) or self.videocapture.set(cv2.CAP_PROP_FRAME_HEIGHT, float(self.capture_height))
 
         actual_width = int(round(self.videocapture.get(cv2.CAP_PROP_FRAME_WIDTH)))
         if not width_success or self.capture_width != actual_width:

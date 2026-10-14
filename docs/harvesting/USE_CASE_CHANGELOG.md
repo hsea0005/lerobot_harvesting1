@@ -50,7 +50,7 @@ README.md in this documentation folder and integration_manifest.json gain notebo
 
 ## Complete inventory versus fork baseline
 
-**43 files: 37 added and 6 modified.** The two documentation edits above affect files already added
+**45 files: 38 added and 7 modified.** The two documentation edits above affect files already added
 by the integration, so they retain Added status in this upstream comparison. All paths are relative
 to the repo root and each row links to the file.
 
@@ -70,6 +70,8 @@ to the repo root and each row links to the file.
 | Added | [examples/harvesting/verify_install.py](../../examples/harvesting/verify_install.py) | Real CLI parsing/factory checks without hardware connection. |
 | Added | [examples/notebooks/hardware_device.ipynb](../../examples/notebooks/hardware_device.ipynb) | Hardware setup, calibration, recording/replay and deployment. |
 | Added | [examples/notebooks/training_device.ipynb](../../examples/notebooks/training_device.ipynb) | Training setup, CUDA checks/repair, ACT training/resume and handoff. |
+| Modified | [src/lerobot/cameras/opencv/camera_opencv.py](../../src/lerobot/cameras/opencv/camera_opencv.py) | Select capture format before FPS; avoid redundant DirectShow stream resets. |
+| Added | [tests/cameras/test_opencv_capture_settings.py](../../tests/cameras/test_opencv_capture_settings.py) | Hardware-free capture negotiation, fallback, validation and cleanup regressions. |
 | Modified | [src/lerobot/robots/__init__.py](../../src/lerobot/robots/__init__.py) | Registers native custom follower configurations. |
 | Added | [src/lerobot/robots/bimanual_harvesting/__init__.py](../../src/lerobot/robots/bimanual_harvesting/__init__.py) | Exports native configurations and hardware implementation classes. |
 | Added | [src/lerobot/robots/bimanual_harvesting/bimanual_harvesting.py](../../src/lerobot/robots/bimanual_harvesting/bimanual_harvesting.py) | Combined eight-joint follower and camera/action routing. |
@@ -143,3 +145,28 @@ afterwards with real dependencies and fake motors/cameras. The patched connectio
 needs verification on the hardware computer. Sync the changed source and start a fresh
 process; an existing editable installation needs no dependency reinstallation.
 Gripper startup alignment/direction remains a separate check after passive operation.
+
+## 2026-10-14: Windows three-camera capture negotiation
+
+The user resolved a hub-related black-camera problem, then recording still failed in
+OpenCV 4.13 DirectShow while setting a camera's height or FPS. The existing Windows
+configuration applied FOURCC only after FPS, so requesting MJPG did not select it
+before the failing FPS operation. The precise driver/USB cause remains unconfirmed.
+
+- Modified src/lerobot/cameras/opencv/camera_opencv.py: select FOURCC first; recheck it
+  after dimensions and after FPS on Windows. Avoid resetting already matching size,
+  FPS and FOURCC on Windows DirectShow. Preserve dimension/FPS validation, fallback
+  warnings and failure cleanup. No public CLI fields or default values changed.
+- Added tests/cameras/test_opencv_capture_settings.py: nine regressions using real
+  OpenCV/LeRobot imports and fake capture handles. Covers format-dependent FPS
+  failure, redundant-setter failure, resize/FPS format resets, unspecified/rejected
+  formats, rejected FPS, non-Windows setup and connection cleanup.
+- Updated README.md and INTEGRATION.md in this folder, this changelog and
+  integration_manifest.json. One new file and five existing files changed.
+
+Validation: three targeted regressions failed before the patch. All nine new camera
+tests and all 77 harvesting tests passed afterward without physical camera/motor
+connections. Existing pytest-based image-fixture camera tests were not run because
+pytest is not installed in the validation environment. The corrected setup still
+requires verification with all three cameras on the hardware computer. Sync the
+changed camera_opencv.py and start a new process; no dependency reinstall is needed.

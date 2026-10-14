@@ -129,5 +129,28 @@
       "real_dependency_tests_passed_after_patch": 77,
       "patched_hardware_verified": false
     }
+  },
+  "camera_capture_fix": {
+    "date": "2026-10-14",
+    "reported_failure": "OpenCV 4.13 DirectShow pVih assertion while setting height/FPS during simultaneous wrist/front/top startup.",
+    "change": "Select FOURCC before size/FPS; recheck after Windows negotiation; skip redundant matching properties on Windows DirectShow.",
+    "driver_or_usb_root_cause_confirmed": false,
+    "added_files": [
+      "tests/cameras/test_opencv_capture_settings.py"
+    ],
+    "modified_files": [
+      "src/lerobot/cameras/opencv/camera_opencv.py",
+      "docs/harvesting/README.md",
+      "docs/harvesting/INTEGRATION.md",
+      "docs/harvesting/USE_CASE_CHANGELOG.md",
+      "docs/harvesting/integration_manifest.json"
+    ],
+    "validation": {
+      "regression_tests_failed_before_patch": 3,
+      "camera_negotiation_tests_passed": 9,
+      "harvesting_tests_passed": 77,
+      "physical_hardware_verified": false,
+      "existing_pytest_image_tests_run": false
+    }
   }
 }

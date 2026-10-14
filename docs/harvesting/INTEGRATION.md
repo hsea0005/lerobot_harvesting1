@@ -112,3 +112,14 @@ The startup cause remains unconfirmed. Both rotation modes and combined leaders 
 the correction without new CLI parameters. All 77 harvesting tests pass with fake hardware;
 the patch still requires verification on the hardware computer. See
 [USE_CASE_CHANGELOG.md](USE_CASE_CHANGELOG.md) for the six modified files.
+
+## Subsequent Windows camera configuration correction (2026-10-14)
+
+The OpenCV camera startup now selects the requested FOURCC before dimensions/FPS,
+rechecks it after Windows negotiations, and avoids resetting already matching properties
+on Windows DirectShow. Dimension/FPS validation, unsupported-format warnings and cleanup
+remain active. This modifies one additional upstream source file, without changing CLI
+fields. Nine new camera negotiation tests and the 77 harvesting tests pass with fake
+hardware; the correction still needs verification on the hardware computer. The original
+validation above describes the initial integration. See USE_CASE_CHANGELOG.md for the
+new test and five modified files, including updated documentation/manifest.
